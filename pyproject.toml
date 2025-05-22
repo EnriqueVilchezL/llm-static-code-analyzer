@@ -1,0 +1,16 @@
+[project]
+name = "llm-iso-5055"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "gradio>=5.30.0",
+    "langchain>=0.3.25",
+    "langchain-community>=0.3.23",
+    "langchain-google-genai>=2.1.4",
+    "pandas>=2.2.3",
+    "pypdf2>=3.0.1",
+    "requests>=2.32.3",
+]
