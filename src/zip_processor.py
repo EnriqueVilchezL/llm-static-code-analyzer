@@ -52,8 +52,8 @@ class ZipFileProcessor:
 
             for file_path in files:
                 # Check if the file has an allowed extension
-                file_extension: str | None = (
-                    file_path.split(".")[-1] if "." in file_path else None
+                file_extension: str = (
+                    file_path.split(".")[-1] if "." in file_path else ""
                 )
 
                 if file_path.startswith("__MACOSX"):

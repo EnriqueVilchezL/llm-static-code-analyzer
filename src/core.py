@@ -9,13 +9,14 @@ import PyPDF2
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
-
 from zip_processor import ZipFileProcessor
-from llm_evaluator import LLMEvaluator
+from llm_evaluator import LLMEvaluator, GenAIEvaluator
 from system_prompt import SYSTEM_PROMPT
+import google.generativeai as genai
 
 # Load environment variables
 load_dotenv()
+genai.configure(api_key=os.getenv("API_KEY"))
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -53,6 +54,7 @@ SUPPORTED_EXTENSIONS = [
 DEFAULT_OUTPUT_ROW = {
     "Type": "None",
     "Weakness": "None",
+    "Description": "None",
     "Severity": "None",
     "File": "None",
     "Code": "None",
@@ -103,6 +105,42 @@ def save_uploaded_zip(gradio_file) -> str:
     shutil.copy(gradio_file.name, temp_path)
     return temp_path
 
+def send_code_to_llm(code: str, verbose: bool = True) -> str:
+    """
+    Sends source code to an LLM for evaluation.
+
+    Args:
+        code (str): Source code to evaluate.
+        verbose (bool): Whether to print processing info (default True).
+
+    Returns:
+        str: Raw response from the LLM.
+    """
+    if verbose:
+        logger.info("Sending code to LLM for evaluation...")
+
+    # llm = LLMEvaluator(
+    #     model=ChatGoogleGenerativeAI(
+    #         api_key=os.getenv("API_KEY"),
+    #         model="gemini-2.0-flash",
+    #     ),
+    #     system_prompt=SYSTEM_PROMPT,
+    # )
+
+    # payload = {"standard": STANDARD_TEXT, "code_snippet": code}
+    # response = llm.evaluate(payload)
+
+    llm = GenAIEvaluator(
+        model=genai.GenerativeModel("gemini-2.0-flash"),
+        system_prompt=SYSTEM_PROMPT,
+    )
+    payload = {"standard": STANDARD_TEXT, "code_snippet": code}
+    response = llm.evaluate(input_variables=payload)
+    
+    if verbose:
+        logger.info(f"LLM response: {response}")
+
+    return response
 
 def evaluate_zip(zip_path: str, verbose: bool = True) -> str:
     """
@@ -123,22 +161,64 @@ def evaluate_zip(zip_path: str, verbose: bool = True) -> str:
     if not code_files:
         return json.dumps([{"Error": "No source code files found."}])
 
-    llm = LLMEvaluator(
-        model=ChatGoogleGenerativeAI(
-            api_key=os.getenv("API_KEY"),
-            model="gemini-2.0-flash",
-        ),
-        system_prompt=SYSTEM_PROMPT,
-    )
-
     code_combined = "\n".join(str(code_files))
-    payload = {"standard": STANDARD_TEXT, "code_snippet": code_combined}
 
-    response = llm.evaluate(payload)
-    logger.info(f"LLM response: {response}")
+    response = send_code_to_llm(code_combined, verbose)
     return response
 
 
+def parse_json(s):
+    """
+    Attempts to extract and parse JSON array or object from a text blob.
+    """
+    try:
+        # Extract the first JSON array or object
+        match = re.search(r"(\{.*\}|\[.*\])", s, re.DOTALL)
+        if match:
+            return json.loads(match.group(1))
+        else:
+            raise ValueError("No JSON object or array found in response.")
+    except Exception as e:
+        logger.error(f"Failed to parse JSON: {e}")
+        raise ValueError(f"Invalid JSON format: {e}") from e
+        return None
+    
+
+def parse_xml(s: str) -> list:
+    """
+    Parses an XML string into a dictionary.
+
+    Args:
+        s (str): XML string to parse.
+
+    Returns:
+        dict: Parsed XML as a dictionary.
+    """
+    # Extract all <Issue>...</Issue> blocks
+    issues = re.findall(r"<Issue>(.*?)</Issue>", s, re.DOTALL)
+    parsed_issues = []
+
+    for issue in issues:
+        parsed = {}
+        fields = DEFAULT_OUTPUT_ROW.keys()
+        for field in fields:
+            # Match content between opening and closing tags for each field
+            match = re.search(rf"<{field}>(.*?)</{field}>", issue, re.DOTALL)
+            if match:
+                parsed[field] = (match.group(1).strip()
+                    .replace("&amp;", "&")
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("&quot;", '"')
+                    .replace("&apos;", "'"))
+                
+            else:
+                parsed[field] = None
+
+        parsed_issues.append(parsed)
+
+    return parsed_issues
+    
 def parse_response_to_dataframe(response: str) -> pd.DataFrame:
     """
     Parses the LLM's JSON response into a Pandas DataFrame.
@@ -150,23 +230,16 @@ def parse_response_to_dataframe(response: str) -> pd.DataFrame:
         pd.DataFrame: Parsed DataFrame or fallback error information.
     """
     try:
-        match = re.search(r"(\[.*\])", response, re.DOTALL)
-        if not match:
-            raise ValueError("No JSON array found in response.")
+        parsed = parse_xml(response)
 
-        json_str = match.group(1)
-        parsed = json.loads(json_str)
-
-        if not isinstance(parsed, list) or not all(
-            isinstance(item, dict) for item in parsed
-        ):
-            raise ValueError("Parsed response is not a list of dictionaries.")
-
-        if not parsed:
+        if len(parsed) == 0:
+            # If no issues found, return an empty DataFrame
             return pd.DataFrame([DEFAULT_OUTPUT_ROW])
-
-        return pd.DataFrame(parsed)
+        else:
+            # Create a DataFrame from the parsed issues
+            return pd.DataFrame(parsed)
 
     except Exception as e:
         logger.error(f"Failed to parse LLM response: {e}")
+        raise ValueError(f"Invalid response format: {e}") from e
         return pd.DataFrame([{"Error": str(e), "Raw response": response}])
