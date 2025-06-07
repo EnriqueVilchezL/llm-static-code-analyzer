@@ -17,86 +17,71 @@ tick pos=left,
 title={Individuals (X) Chart with ABC Zones},
 x grid style={darkgrey176},
 xmajorgrids,
-xmin=-1.45, xmax=30.45,
+xmin=-0.7, xmax=14.7,
 xtick style={color=black},
 xticklabels={},
 y grid style={darkgrey176},
 ylabel={Accuracy},
 ymajorgrids,
-ymin=66.85, ymax=92.15,
+ymin=74.2086, ymax=87.7914,
 ytick style={color=black}
 ]
 \addplot [semithick, darkblue, mark=*, mark size=3, mark options={solid}]
 table {%
-0 83
-1 68
-2 68
-3 76
-4 76
-5 74
-6 78
+0 85
+1 78
+2 79.5
+3 81
+4 81
+5 78.5
+6 83
 7 82
-8 70
-9 77
-10 78
-11 79
-12 79
-13 82
-14 86
-15 87
-16 88
-17 91
-18 86
-19 86
-20 83
-21 88
-22 82
-23 81
-24 81
-25 84
-26 86
-27 86
-28 84
-29 81
+8 75.5
+9 79
+10 81
+11 82.5
+12 82.5
+13 83
+14 83.5
 };
 \addlegendentry{Accuracy}
 \addplot [semithick, green, dashed]
 table {%
--1.45 81
-30.45 81
+-0.7 81
+14.7 81
 };
 \addlegendentry{Center Line (X̄=81.00)}
 \addplot [semithick, red, dashed]
 table {%
--1.45 89.805
-30.45 89.805
+-0.7 87.174
+14.7 87.174
 };
-\addlegendentry{UCL (89.80)}
+\addlegendentry{UCL (87.17)}
 \addplot [semithick, red, dashed]
 table {%
--1.45 72.195
-30.45 72.195
+-0.7 74.826
+14.7 74.826
 };
-\addlegendentry{LCL (72.20)}
+\addlegendentry{LCL (74.83)}
 \addplot [thick, orange, opacity=0.6, dotted, forget plot]
 table {%
--1.45 83.935
-30.45 83.935
-};
-\addplot [thick, orange, opacity=0.6, dotted, forget plot]
-table {%
--1.45 78.065
-30.45 78.065
+-0.7 83.058
+14.7 83.058
 };
 \addplot [thick, orange, opacity=0.6, dotted, forget plot]
 table {%
--1.45 86.87
-30.45 86.87
+-0.7 78.942
+14.7 78.942
 };
 \addplot [thick, orange, opacity=0.6, dotted, forget plot]
 table {%
--1.45 75.13
-30.45 75.13
+-0.7 85.116
+14.7 85.116
+};
+\addplot [thick, orange, opacity=0.6, dotted, forget plot]
+table {%
+-0.7 76.884
+14.7 76.884
 };
 
 \nextgroupplot[
@@ -108,59 +93,44 @@ title={Moving Range (mR) Chart},
 x grid style={darkgrey176},
 xlabel={Iteration},
 xmajorgrids,
-xmin=-1.45, xmax=30.45,
+xmin=-0.7, xmax=14.7,
 xtick style={color=black},
 y grid style={darkgrey176},
 ylabel={mR},
 ymajorgrids,
-ymin=-0.75, ymax=15.75,
+ymin=-0.37925, ymax=7.96425,
 ytick style={color=black}
 ]
 \addplot [semithick, darkblue, mark=square*, mark size=3, mark options={solid}]
 table {%
-1 15
-2 0
-3 8
+1 7
+2 1.5
+3 1.5
 4 0
-5 2
-6 4
-7 4
-8 12
-9 7
-10 1
-11 1
+5 2.5
+6 4.5
+7 1
+8 6.5
+9 3.5
+10 2
+11 1.5
 12 0
-13 3
-14 4
-15 1
-16 1
-17 3
-18 5
-19 0
-20 3
-21 5
-22 6
-23 1
-24 0
-25 3
-26 2
-27 0
-28 2
-29 3
+13 0.5
+14 0.5
 };
 \addlegendentry{Moving Range}
 \addplot [semithick, green, dashed]
 table {%
--1.45 3.31
-30.45 3.31
+-0.7 2.321
+14.7 2.321
 };
-\addlegendentry{Center Line (mR=3.31)}
+\addlegendentry{Center Line (mR=2.32)}
 \addplot [semithick, red, dashed]
 table {%
--1.45 10.817
-30.45 10.817
+-0.7 7.585
+14.7 7.585
 };
-\addlegendentry{UCL (10.82)}
+\addlegendentry{UCL (7.58)}
 \end{groupplot}
 
 \end{tikzpicture}
